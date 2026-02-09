@@ -1100,14 +1100,15 @@ textarea {
 
 @media (min-width: 640px) {
   .app-main {
-    max-width: 420px;
+    max-width: 520px;
     margin: 0 auto;
   }
 
   .tab-bar {
-    max-width: 460px;
-    margin: 0 auto;
     left: 50%;
+    right: auto;
+    width: min(520px, calc(100% - 32px));
+    margin: 0;
     transform: translateX(-50%);
     border-radius: 24px 24px 0 0;
   }
