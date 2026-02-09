@@ -1,0 +1,51 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # -------- FRONTEND --------
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload frontend dist
+        run: |
+          rsync -az --delete frontend/dist/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/love-coupons.ru/
+
+      # -------- BACKEND --------
+      - name: Upload backend sources
+        run: |
+          rsync -az --delete backend/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/love-coupons/backend/
+
+      - name: Install & restart backend on VPS
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'bash -s' << 'EOF'
+          set -e
+          cd /opt/love-coupons/backend
+          npm ci
+          npm run build
+
+          # запускаем/перезапускаем
+          pm2 start dist/main.js --name love-coupons-api --update-env || pm2 restart love-coupons-api
+          pm2 save
+          EOF
