@@ -20,6 +20,6 @@ export class Couple {
   @Column()
   secondUserId: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 }

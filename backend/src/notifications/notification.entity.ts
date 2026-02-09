@@ -4,6 +4,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
 } from "typeorm";
+import type { NotificationData } from "./dto/notification.types";
 
 export enum NotificationType {
   COUPON = "coupon",
@@ -18,13 +19,13 @@ export enum NotificationStatus {
   ARCHIVED = "archived",
 }
 
-@Entity("users")
-export class User {
+@Entity("notifications")
+export class Notification {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
-  user_id: string;
+  userId: string;
 
   @Column({
     type: "enum",
@@ -33,27 +34,19 @@ export class User {
   })
   type: NotificationType;
 
-  @Column()
-  title: string;
-
-  @Column()
-  text: string;
-
   @Column({
     type: "enum",
     enum: NotificationStatus,
     default: NotificationStatus.NEW,
   })
-  status: string;
+  status: NotificationStatus;
 
   @Column({ type: "jsonb", nullable: true })
-  data: {
-    coupon_id?: string;
-  };
+  data: NotificationData;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @Column({ type: "timestamp" })
-  readAt: Date;
+  @Column({ type: "timestamptz", nullable: true })
+  readAt: Date | null;
 }

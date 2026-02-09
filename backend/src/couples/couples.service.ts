@@ -14,6 +14,8 @@ import { PairCoupleDto } from "./dto/pairCouple.dto";
 import { Repository } from "typeorm";
 import { Invite, InviteStatus } from "./invite.entity";
 import { PairCoupleIdDto } from "./dto/pairCoupleId.dto";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { NotificationType } from "src/notifications/notification.entity";
 
 @Injectable()
 export class CouplesService {
@@ -22,6 +24,7 @@ export class CouplesService {
     private readonly couples: Repository<Couple>,
     @InjectRepository(Invite)
     private readonly invites: Repository<Invite>,
+    private readonly notificationsServce: NotificationsService,
   ) {}
 
   public async inviteCouple(dto: PairCoupleDto) {
@@ -46,7 +49,15 @@ export class CouplesService {
       recieverId: dto.secondUserId,
     });
 
-    return await this.invites.save(invite);
+    const savedInvite = await this.invites.save(invite);
+
+    await this.notificationsServce.createNotification({
+      userId: savedInvite.recieverId,
+      type: NotificationType.INVITE,
+      data: { inviteId: savedInvite.id },
+    });
+
+    return savedInvite;
   }
 
   public async getAllSendedInvites(userId: string): Promise<Invite[]> {

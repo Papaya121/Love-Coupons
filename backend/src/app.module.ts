@@ -21,6 +21,9 @@ import { NotificationsModule } from './notifications/notifications.module';
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
       synchronize: true,
+      extra: {
+        options: "-c timezone=UTC",
+      },
     }),
     UsersModule,
     CouponsModule,

@@ -10,6 +10,8 @@ import { Repository } from "typeorm";
 import { CreateCouponDto } from "./dto/createCoupon.dto";
 import { UsersService } from "src/users/users.service";
 import { CouplesService } from "src/couples/couples.service";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { NotificationType } from "src/notifications/notification.entity";
 
 @Injectable()
 export class CouponsService {
@@ -18,6 +20,7 @@ export class CouponsService {
     private readonly coupons: Repository<Coupon>,
     private readonly usersService: UsersService,
     private readonly couplesService: CouplesService,
+    private readonly notificationsServce: NotificationsService,
   ) {}
 
   public async createCoupon(dto: CreateCouponDto): Promise<Coupon> {
@@ -37,13 +40,21 @@ export class CouponsService {
 
     if (dto.expiresInDays != null && dto.expiresInDays > 0) {
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + dto.expiresInDays);
+      expiresAt.setUTCDate(expiresAt.getUTCDate() + dto.expiresInDays);
       coupon.expiresAt = expiresAt;
     } else {
       coupon.expiresAt = null;
     }
 
-    return await this.coupons.save(coupon);
+    const savedCoupon = await this.coupons.save(coupon);
+
+    await this.notificationsServce.createNotification({
+      userId: user.id,
+      type: NotificationType.COUPON,
+      data: { couponId: savedCoupon.id },
+    });
+
+    return savedCoupon;
   }
 
   public async redeemCoupon(uuid: string) {
@@ -62,7 +73,13 @@ export class CouponsService {
 
     // coupon.expiresAt?.setDate(coupon.expiresAt.getDate() + 7);
 
-    await this.coupons.save(coupon);
+    const savedCoupon = await this.coupons.save(coupon);
+
+    await this.notificationsServce.createNotification({
+      userId: savedCoupon.authorId,
+      type: NotificationType.REDEEM,
+      data: { redeemId: savedCoupon.id },
+    });
   }
 
   public async getCouponsByAuthorUUID(uuid: string): Promise<Coupon[]> {

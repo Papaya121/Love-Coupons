@@ -40,22 +40,23 @@ export class Coupon {
   status: CouponStatus;
 
   @Column({
-    type: "timestamp",
+    type: "timestamptz",
     nullable: true,
   })
   expiresAt: Date | null;
 
   @Column({
-    type: "timestamp",
+    type: "timestamptz",
     nullable: true,
   })
   redeemedDate: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
   get computedStatus(): CouponStatus {
     if (this.status === CouponStatus.REDEEMED) return CouponStatus.REDEEMED;
+    if (this.status === CouponStatus.EXPIRED) return CouponStatus.EXPIRED;
     if (this.expiresAt && this.expiresAt.getTime() < Date.now())
       return CouponStatus.EXPIRED;
     return CouponStatus.AVAILABLE;

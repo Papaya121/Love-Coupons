@@ -32,6 +32,6 @@ export class Invite {
   })
   status: InviteStatus;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 }

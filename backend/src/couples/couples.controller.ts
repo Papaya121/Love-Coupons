@@ -33,8 +33,6 @@ export class CouplesController {
     const couple = await this.couplesService.getCouple(user.id);
     if (couple == null) throw new NotFoundException("Couple is not found!");
 
-    console.log(couple);
-
     const dto: CoupleDto = {
       id: couple.id,
       firstUserId: couple.firstUserId,

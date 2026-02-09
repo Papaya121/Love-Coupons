@@ -22,11 +22,13 @@ export class CouponsController {
 
   @Get("owned")
   async getAllOwnedCoupons(@CurrentUser() req: JwtPayload) {
-    return await this.couponsService.getCouponsByOwnerUUID(req.sub);
+    const coupons = await this.couponsService.getCouponsByOwnerUUID(req.sub);
+    return coupons.map((coupon) => new CouponDto(coupon));
   }
   @Get("sended")
   async getAllSendedCoupons(@CurrentUser() req: JwtPayload) {
-    return await this.couponsService.getCouponsByAuthorUUID(req.sub);
+    const coupons = await this.couponsService.getCouponsByAuthorUUID(req.sub);
+    return coupons.map((coupon) => new CouponDto(coupon));
   }
 
   @Get(":uuid")

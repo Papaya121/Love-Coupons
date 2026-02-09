@@ -664,6 +664,10 @@ textarea {
   gap: 12px;
 }
 
+.notice-tabs {
+  margin-top: 14px;
+}
+
 .notice-summary__card {
   background: var(--surface);
   border-radius: 18px;
@@ -730,6 +734,12 @@ textarea {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.notice-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .notice-item--unread {
@@ -800,6 +810,52 @@ textarea {
 .notice-status {
   font-weight: 600;
   color: var(--accent);
+}
+
+.notice-detail-list {
+  display: grid;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.notice-detail-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.notice-detail-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.notice-detail-value {
+  text-align: right;
+  color: var(--text);
+}
+
+.notice-actions {
+  display: grid;
+  padding-top: 8px;
+}
+
+.notice-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.notice-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 10px;
 }
 
 .tab-bar {

@@ -225,3 +225,106 @@ curl -X POST http://localhost:3120/couples/pair \
 curl -X POST http://localhost:3120/couples/unpair \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
+
+## Notifications
+
+Все эндпоинты раздела требуют авторизации (Bearer `accessToken` из `/auth/login` или `/auth/register`).
+
+### Структура ответа (NotificationDto)
+
+```json
+{
+  "id": "uuid",
+  "type": "coupon | invite | redeem | system",
+  "status": "new | seen | archived",
+  "data": {
+    "couponId": "uuid"
+  },
+  "createdAt": "2026-02-02T12:40:00.000Z",
+  "readAt": null
+}
+```
+
+### Поле `data` зависит от `type`
+
+- `coupon` → `{ "couponId": "uuid" }`
+- `invite` → `{ "inviteId": "uuid" }`
+- `redeem` → `{ "redeemId": "uuid" }`
+- `system` → `null`
+
+### GET /notifications
+
+Получить все уведомления текущего пользователя.
+
+**Успешный ответ:** `200 OK` + массив `NotificationDto`.
+
+**Ошибки:**
+
+- `401 Unauthorized` — невалидный или отсутствует токен.
+- `404 Not Found` — пользователь не найден.
+
+**Пример:**
+
+```bash
+curl http://localhost:3120/notifications \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### GET /notifications/:uuid
+
+Получить одно уведомление по `uuid`.
+
+**Успешный ответ:** `200 OK` + `NotificationDto`.
+
+**Ошибки:**
+
+- `401 Unauthorized` — невалидный или отсутствует токен.
+- `403 Forbidden` — уведомление принадлежит другому пользователю.
+- `404 Not Found` — уведомление не найдено.
+
+**Пример:**
+
+```bash
+curl http://localhost:3120/notifications/NOTIFICATION_UUID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### POST /notifications/see/:uuid
+
+Пометить уведомление как просмотренное.
+
+**Успешный ответ:** `201 Created` + `NotificationDto`.
+
+**Ошибки:**
+
+- `400 Bad Request` — статус уже `seen`.
+- `401 Unauthorized` — невалидный или отсутствует токен.
+- `403 Forbidden` — уведомление принадлежит другому пользователю.
+- `404 Not Found` — уведомление не найдено.
+
+**Пример:**
+
+```bash
+curl -X POST http://localhost:3120/notifications/see/NOTIFICATION_UUID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### POST /notifications/archive/:uuid
+
+Переместить уведомление в архив.
+
+**Успешный ответ:** `201 Created` + `NotificationDto`.
+
+**Ошибки:**
+
+- `400 Bad Request` — статус уже `archived`.
+- `401 Unauthorized` — невалидный или отсутствует токен.
+- `403 Forbidden` — уведомление принадлежит другому пользователю.
+- `404 Not Found` — уведомление не найдено.
+
+**Пример:**
+
+```bash
+curl -X POST http://localhost:3120/notifications/archive/NOTIFICATION_UUID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```

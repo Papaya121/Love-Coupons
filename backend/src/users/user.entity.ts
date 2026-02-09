@@ -22,6 +22,6 @@ export class User {
   @Column()
   name: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 }

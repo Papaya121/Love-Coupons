@@ -76,8 +76,7 @@
         <h2 class="history-card__title">История отправленных</h2>
         <span class="history-card__count">{{ sentCoupons.length }}</span>
       </div>
-      <p v-if="showSentLoading" class="helper-text">Загружаем отправленные...</p>
-      <p v-else-if="sentError && sentCoupons.length === 0" class="helper-text helper-text--error">
+      <p v-if="sentError && sentCoupons.length === 0" class="helper-text helper-text--error">
         {{ sentError }}
       </p>
       <p v-else-if="sentCoupons.length === 0" class="helper-text">

@@ -46,6 +46,9 @@
     <div v-if="selectedCoupon" class="redeem-sheet" role="dialog" aria-modal="true">
       <div class="redeem-sheet__backdrop" @click="closeRedeem"></div>
       <div class="redeem-sheet__panel">
+        <button class="notice-close" type="button" @click="closeRedeem">
+          Закрыть
+        </button>
         <p class="redeem-sheet__eyebrow">Применение купона</p>
         <h2 class="redeem-sheet__title">{{ selectedCoupon.title }}</h2>
         <p class="redeem-sheet__text">
@@ -53,6 +56,9 @@
         </p>
         <div class="redeem-sheet__meta">
           <span>Статус: {{ selectedCoupon.statusLabel }}</span>
+          <span v-if="selectedCoupon.createdAt">
+            Создан: {{ formatDate(selectedCoupon.createdAt) }}
+          </span>
           <span v-if="selectedCoupon.expiresAt">
             Действует до: {{ formatDate(selectedCoupon.expiresAt) }}
           </span>
@@ -69,22 +75,6 @@
           @click="handleRedeem"
         >
           {{ isRedeeming ? 'Применяем...' : 'Применить' }}
-        </button>
-        <button
-          v-else
-          class="secondary-button"
-          type="button"
-          @click="closeRedeem"
-        >
-          Закрыть
-        </button>
-        <button
-          v-if="selectedCoupon.status === 'available'"
-          class="secondary-button"
-          type="button"
-          @click="closeRedeem"
-        >
-          Закрыть
         </button>
       </div>
     </div>
