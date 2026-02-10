@@ -34,7 +34,7 @@ jobs:
       # -------- BACKEND --------
       - name: Upload backend sources
         run: |
-          rsync -az --delete backend/ \
+          rsync -az --delete --exclude .env --exclude .env.* backend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/love-coupons/backend/
 
       - name: Install & restart backend on VPS

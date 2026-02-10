@@ -7,7 +7,8 @@ import { AuthModule } from "./auth/auth.module";
 import { CouplesModule } from "./couples/couples.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
-import { NotificationsModule } from './notifications/notifications.module';
+import { NotificationsModule } from "./notifications/notifications.module";
+import { PushModule } from "./push/push.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     AuthModule,
     CouplesModule,
     NotificationsModule,
+    PushModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -668,6 +668,74 @@ textarea {
   margin-top: 14px;
 }
 
+.notice-push-card {
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.notice-push-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.notice-push-label {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.notice-push-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.notice-push-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.notice-push-status--off {
+  background: rgba(108, 108, 112, 0.12);
+  color: var(--muted);
+}
+
+.notice-push-status--blocked {
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff3b30;
+}
+
+.notice-push-status--on {
+  background: rgba(45, 143, 87, 0.12);
+  color: var(--success);
+}
+
+.notice-push-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.notice-push-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .notice-summary__card {
   background: var(--surface);
   border-radius: 18px;

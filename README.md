@@ -328,3 +328,122 @@ curl -X POST http://localhost:3120/notifications/see/NOTIFICATION_UUID \
 curl -X POST http://localhost:3120/notifications/archive/NOTIFICATION_UUID \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
+
+## Push
+
+### GET /push/vapid-public-key
+
+Получить публичный VAPID ключ для Web Push.
+
+**Успешный ответ:** `200 OK`.
+
+```json
+{
+  "key": "PUBLIC_VAPID_KEY"
+}
+```
+
+**Примечание:** значение берется из переменной окружения `VAPID_PUBLIC_KEY`.
+
+**Пример:**
+
+```bash
+curl http://localhost:3120/push/vapid-public-key
+```
+
+Все остальные эндпоинты раздела требуют авторизации (Bearer `accessToken` из `/auth/login` или `/auth/register`).
+
+### POST /push/subscribe
+
+Сохранить push-подписку текущего пользователя.
+
+**Тело запроса:**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+  "keys": {
+    "p256dh": "BASE64_P256DH",
+    "auth": "BASE64_AUTH"
+  }
+}
+```
+
+**Успешный ответ:** `201 Created`.
+
+```json
+{
+  "id": 1,
+  "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+  "p256dh": "BASE64_P256DH",
+  "auth": "BASE64_AUTH",
+  "userId": "uuid",
+  "createdAt": "2026-02-02T12:40:00.000Z"
+}
+```
+
+**Пример:**
+
+```bash
+curl -X POST http://localhost:3120/push/subscribe \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+    "keys": {
+      "p256dh": "BASE64_P256DH",
+      "auth": "BASE64_AUTH"
+    }
+  }'
+```
+
+### DELETE /push/unsubscribe
+
+Удалить push-подписку по `endpoint`.
+
+**Тело запроса:**
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/..."
+}
+```
+
+**Успешный ответ:** `200 OK`.
+
+```json
+{
+  "deleted": 1
+}
+```
+
+**Пример:**
+
+```bash
+curl -X DELETE http://localhost:3120/push/unsubscribe \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "endpoint": "https://fcm.googleapis.com/fcm/send/..."
+  }'
+```
+
+### POST /push/test
+
+Отправить тестовый push текущему пользователю.
+
+**Успешный ответ:** `201 Created`.
+
+```json
+{
+  "sent": 1,
+  "removed": 0
+}
+```
+
+**Пример:**
+
+```bash
+curl -X POST http://localhost:3120/push/test \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```

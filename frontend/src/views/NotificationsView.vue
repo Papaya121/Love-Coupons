@@ -16,6 +16,53 @@
       </div>
     </div>
 
+    <section v-if="pushSupported === true" class="notice-push-card">
+      <div class="notice-push-row">
+        <div>
+          <p class="notice-push-label">Push-уведомления</p>
+          <p class="notice-push-title">Новые события без ожидания</p>
+        </div>
+        <span class="notice-push-status" :class="pushStatusClass">
+          {{ pushStatusLabel }}
+        </span>
+      </div>
+      <p class="notice-push-text">{{ pushHint }}</p>
+      <div class="notice-push-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          :disabled="pushButtonDisabled"
+          @click="handlePushToggle"
+        >
+          {{
+            pushLoading
+              ? pushSubscription
+                ? 'Отключаем...'
+                : 'Подключаем...'
+              : pushButtonLabel
+          }}
+        </button>
+        <button
+          v-if="pushSubscription"
+          type="button"
+          class="secondary-button"
+          :disabled="pushTestLoading"
+          @click="handlePushTest"
+        >
+          {{ pushTestLoading ? 'Отправляем...' : 'Тестовый push' }}
+        </button>
+      </div>
+      <p v-if="pushError" class="helper-text helper-text--error">{{ pushError }}</p>
+      <p v-if="pushSuccess" class="helper-text helper-text--success">{{ pushSuccess }}</p>
+      <p v-if="pushTestError" class="helper-text helper-text--error">{{ pushTestError }}</p>
+      <p v-if="pushTestSuccess" class="helper-text helper-text--success">
+        {{ pushTestSuccess }}
+      </p>
+    </section>
+    <p v-else-if="pushSupported === false" class="helper-text helper-text--error">
+      Push-уведомления недоступны в этом браузере.
+    </p>
+
     <div class="notice-tabs segment-control" role="tablist" aria-label="Фильтр уведомлений">
       <button
         class="segment-control__button"
@@ -153,6 +200,13 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { apiRequest } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { usePartners } from '../lib/partners'
+import {
+  getPushPermission,
+  getPushSubscription,
+  isPushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '../lib/push'
 
 const { token, user } = useAuth()
 const { users, refreshUsers } = usePartners()
@@ -166,6 +220,15 @@ const OPENED_KEY = 'love-coupon-notifications-opened'
 const openedOnce = ref(new Set())
 const viewMode = ref('inbox')
 const couponTitles = ref(new Map())
+const pushSupported = ref(null)
+const pushPermission = ref('default')
+const pushSubscription = ref(null)
+const pushLoading = ref(false)
+const pushError = ref('')
+const pushSuccess = ref('')
+const pushTestLoading = ref(false)
+const pushTestError = ref('')
+const pushTestSuccess = ref('')
 
 const TYPE_META = {
   coupon: {
@@ -205,6 +268,173 @@ const INVITE_STATUS_LABELS = {
 const showLoading = computed(
   () => isLoading.value && notifications.value.length === 0 && !loadError.value
 )
+
+const pushStatusLabel = computed(() => {
+  if (pushSupported.value !== true) return 'Недоступно'
+  if (pushPermission.value === 'denied') return 'Запрещено'
+  if (pushSubscription.value) return 'Включено'
+  return 'Выключено'
+})
+
+const pushStatusClass = computed(() => {
+  if (pushSupported.value !== true) return 'notice-push-status--off'
+  if (pushPermission.value === 'denied') return 'notice-push-status--blocked'
+  if (pushSubscription.value) return 'notice-push-status--on'
+  return 'notice-push-status--off'
+})
+
+const pushButtonLabel = computed(() => {
+  if (pushSupported.value !== true) return 'Недоступно'
+  if (pushPermission.value === 'denied') return 'Разрешите в настройках'
+  if (pushSubscription.value) return 'Отключить push'
+  return 'Включить push'
+})
+
+const pushButtonDisabled = computed(() => {
+  if (pushSupported.value !== true) return true
+  return pushLoading.value || pushPermission.value === 'denied'
+})
+
+const pushHint = computed(() => {
+  if (pushSupported.value !== true) {
+    return 'Браузер не поддерживает push-уведомления.'
+  }
+  if (pushPermission.value === 'denied') {
+    return 'Разрешите уведомления в настройках браузера, чтобы получать новые события.'
+  }
+  if (pushSubscription.value) {
+    return 'Мы будем присылать уведомления о новых событиях.'
+  }
+  return 'Включите push, чтобы не пропускать новые уведомления.'
+})
+
+const refreshPushState = async () => {
+  pushSupported.value = isPushSupported()
+  if (!pushSupported.value) return
+  pushPermission.value = getPushPermission()
+  try {
+    pushSubscription.value = await getPushSubscription()
+  } catch (error) {
+    pushSubscription.value = null
+  }
+}
+
+const buildSubscriptionPayload = (subscription) => {
+  if (!subscription) return null
+  const payload = subscription.toJSON ? subscription.toJSON() : subscription
+  if (!payload?.endpoint || !payload?.keys?.p256dh || !payload?.keys?.auth) {
+    return null
+  }
+  return {
+    endpoint: payload.endpoint,
+    keys: {
+      p256dh: payload.keys.p256dh,
+      auth: payload.keys.auth,
+    },
+  }
+}
+
+const registerPushOnServer = async (subscription) => {
+  if (!token.value) {
+    throw new Error('Сначала войдите в аккаунт.')
+  }
+  const body = buildSubscriptionPayload(subscription)
+  if (!body) {
+    throw new Error('Не удалось получить данные подписки.')
+  }
+  await apiRequest('/push/subscribe', {
+    method: 'POST',
+    token: token.value,
+    body,
+  })
+}
+
+const unregisterPushOnServer = async (subscription) => {
+  if (!token.value) {
+    throw new Error('Сначала войдите в аккаунт.')
+  }
+  const body = buildSubscriptionPayload(subscription)
+  if (!body) return
+  await apiRequest('/push/unsubscribe', {
+    method: 'DELETE',
+    token: token.value,
+    body: { endpoint: body.endpoint },
+  })
+}
+
+const sendTestPush = async () => {
+  if (!token.value) {
+    throw new Error('Сначала войдите в аккаунт.')
+  }
+  await apiRequest('/push/test', {
+    method: 'POST',
+    token: token.value,
+  })
+}
+
+const enablePush = async () => {
+  pushLoading.value = true
+  pushError.value = ''
+  pushSuccess.value = ''
+  try {
+    const subscription = await subscribeToPush()
+    await registerPushOnServer(subscription)
+    pushSubscription.value = subscription
+    pushPermission.value = getPushPermission()
+    pushSuccess.value = 'Push-уведомления включены.'
+  } catch (error) {
+    await unsubscribeFromPush()
+    pushSubscription.value = null
+    pushError.value = error?.message ?? 'Не удалось включить push.'
+  } finally {
+    pushLoading.value = false
+  }
+}
+
+const disablePush = async () => {
+  pushLoading.value = true
+  pushError.value = ''
+  pushSuccess.value = ''
+  try {
+    const subscription = pushSubscription.value ?? (await getPushSubscription())
+    if (subscription) {
+      try {
+        await unregisterPushOnServer(subscription)
+      } catch (error) {
+        pushError.value = error?.message ?? 'Не удалось отключить push на сервере.'
+      }
+    }
+    await unsubscribeFromPush()
+    await refreshPushState()
+    pushSuccess.value = 'Push-уведомления выключены.'
+  } catch (error) {
+    pushError.value = error?.message ?? 'Не удалось выключить push.'
+  } finally {
+    pushLoading.value = false
+  }
+}
+
+const handlePushToggle = async () => {
+  if (pushSubscription.value) {
+    await disablePush()
+  } else {
+    await enablePush()
+  }
+}
+
+const handlePushTest = async () => {
+  pushTestLoading.value = true
+  pushTestError.value = ''
+  pushTestSuccess.value = ''
+  try {
+    await sendTestPush()
+    pushTestSuccess.value = 'Тестовый push отправлен.'
+  } catch (error) {
+    pushTestError.value = error?.message ?? 'Не удалось отправить тестовый push.'
+  } finally {
+    pushTestLoading.value = false
+  }
+}
 
 const isSameDay = (left, right) =>
   left.getFullYear() === right.getFullYear() &&
@@ -750,6 +980,7 @@ onMounted(() => {
   const hasCache = notifications.value.length > 0
   fetchNotifications({ background: hasCache })
   observeNotices()
+  refreshPushState()
 })
 
 watch(notifications, () => {
