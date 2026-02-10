@@ -108,7 +108,7 @@ export class PushService {
 
   async sendNotification(notification: NotificationDto) {
     const push = await this.generatePush(notification);
-    return await this.sendToUser(notification.id, push);
+    return await this.sendToUser(notification.userId, push);
   }
 
   private async generatePush(
