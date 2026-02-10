@@ -12,6 +12,7 @@ const parseJson = async (response) => {
 
 export const apiRequest = async (path, options = {}) => {
   const { method = 'GET', body, token } = options
+  const isAuthRequest = path.startsWith('/auth/')
   const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
@@ -23,7 +24,7 @@ export const apiRequest = async (path, options = {}) => {
 
   const payload = await parseJson(response)
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 && token) {
       localStorage.removeItem('love-coupon-auth')
       if (window.location.pathname !== '/auth') {
         window.location.assign('/auth')
@@ -37,6 +38,10 @@ export const apiRequest = async (path, options = {}) => {
         ? Array.isArray(payload.message)
           ? payload.message.join(' ')
           : payload.message
+        : response.status === 401
+        ? isAuthRequest
+          ? 'Неверный логин или пароль.'
+          : 'Необходима авторизация.'
         : 'Ошибка запроса. Попробуйте снова.'
     const error = new Error(message)
     error.payload = payload

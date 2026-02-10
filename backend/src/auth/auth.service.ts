@@ -39,10 +39,11 @@ export class AuthService {
       (await this.usersService.findByLogin(dto.login)) ??
       (await this.usersService.findByEmail(dto.login));
 
-    if (user == null) throw new UnauthorizedException("Invalid credentails!");
+    if (user == null)
+      throw new UnauthorizedException("Неверный логин или пароль.");
 
     if ((await argon2.verify(user.hashedPassword, dto.password)) == false)
-      throw new UnauthorizedException("Invalid credentails!");
+      throw new UnauthorizedException("Неверный логин или пароль.");
 
     return await this.auth(user);
   }

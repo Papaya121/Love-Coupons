@@ -5,6 +5,27 @@
       <h1 class="view-title">Купоны</h1>
     </header>
 
+    <div class="segment-control" role="tablist" aria-label="Фильтр купонов">
+      <button
+        class="segment-control__button"
+        :class="{ 'is-active': viewMode === 'active' }"
+        role="tab"
+        :aria-selected="viewMode === 'active'"
+        @click="viewMode = 'active'"
+      >
+        Активные
+      </button>
+      <button
+        class="segment-control__button"
+        :class="{ 'is-active': viewMode === 'archive' }"
+        role="tab"
+        :aria-selected="viewMode === 'archive'"
+        @click="viewMode = 'archive'"
+      >
+        Архив
+      </button>
+    </div>
+
     <div class="coupon-list">
       <template v-if="showSkeleton">
         <div
@@ -28,7 +49,7 @@
         {{ loadError }}
       </p>
       <p v-else-if="sortedCoupons.length === 0" class="helper-text">
-        Пока нет купонов от партнера.
+        {{ emptyMessage }}
       </p>
       <template v-else>
         <CouponCard
@@ -94,6 +115,7 @@ const isLoading = ref(false)
 const loadError = ref('')
 const redeemError = ref('')
 const isRedeeming = ref(false)
+const viewMode = ref('active')
 const CACHE_KEY = 'love-coupon-owned-coupons'
 
 const selectedCoupon = ref(null)
@@ -114,8 +136,20 @@ const showSkeleton = computed(
   () => isLoading.value && coupons.value.length === 0 && !loadError.value
 )
 
+const activeCoupons = computed(() =>
+  coupons.value.filter((coupon) => coupon.status === 'available')
+)
+
+const archivedCoupons = computed(() =>
+  coupons.value.filter((coupon) => coupon.status !== 'available')
+)
+
+const filteredCoupons = computed(() =>
+  viewMode.value === 'active' ? activeCoupons.value : archivedCoupons.value
+)
+
 const sortedCoupons = computed(() => {
-  const list = [...coupons.value]
+  const list = [...filteredCoupons.value]
   return list.sort((a, b) => {
     const aWeight = statusWeight[a.status] ?? 0
     const bWeight = statusWeight[b.status] ?? 0
@@ -123,6 +157,12 @@ const sortedCoupons = computed(() => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   })
 })
+
+const emptyMessage = computed(() =>
+  viewMode.value === 'active'
+    ? 'Пока нет активных купонов.'
+    : 'Архив пуст: использованные и истекшие купоны появятся здесь.'
+)
 
 const openRedeem = (coupon) => {
   selectedCoupon.value = coupon

@@ -60,13 +60,19 @@
         </div>
 
         <div class="field">
-          <label class="field-label" for="auth-login">Логин или почта</label>
+          <label class="field-label" for="auth-login">Логин</label>
           <input
             id="auth-login"
             v-model.trim="form.login"
             class="field-input"
             type="text"
             autocomplete="username"
+            :pattern="mode === 'register' ? loginPatternHtml : null"
+            :title="
+              mode === 'register'
+                ? 'Только латинские буквы, цифры и символы . _ -'
+                : null
+            "
             placeholder="yourlove"
             required
           />
@@ -115,6 +121,9 @@ const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
+const loginPattern = /^[a-z0-9._-]+$/
+const loginPatternHtml = '[a-z0-9._-]+'
+
 const form = reactive({
   email: '',
   login: '',
@@ -137,18 +146,30 @@ watch(mode, () => {
   success.value = ''
 })
 
+const normalizeLogin = (value) => (value ?? '').trim().toLowerCase()
+const normalizeEmail = (value) => (value ?? '').trim().toLowerCase()
+
 const handleSubmit = async () => {
   error.value = ''
   success.value = ''
   loading.value = true
   try {
+    const normalizedLogin = normalizeLogin(form.login)
+    if (form.login !== normalizedLogin) form.login = normalizedLogin
+    if (mode.value === 'register' && !loginPattern.test(normalizedLogin)) {
+      error.value =
+        'Логин может содержать только латинские буквы, цифры и символы . _ -'
+      return
+    }
     if (mode.value === 'login') {
-      await login(form.login, form.password)
+      await login(normalizedLogin, form.password)
       success.value = 'С возвращением!'
     } else {
+      const normalizedEmail = normalizeEmail(form.email)
+      if (form.email !== normalizedEmail) form.email = normalizedEmail
       await register({
-        email: form.email,
-        login: form.login,
+        email: normalizedEmail,
+        login: normalizedLogin,
         name: form.name,
         password: form.password,
       })

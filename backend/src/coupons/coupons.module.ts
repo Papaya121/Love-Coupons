@@ -17,5 +17,6 @@ import { NotificationsModule } from "src/notifications/notifications.module";
   ],
   controllers: [CouponsController],
   providers: [CouponsService, JwtStrategy],
+  exports: [CouponsService],
 })
 export class CouponsModule {}
