@@ -8,5 +8,6 @@ import { PushService } from "./push.service";
   imports: [TypeOrmModule.forFeature([PushSubscription])],
   controllers: [PushController],
   providers: [PushService],
+  exports: [PushService],
 })
 export class PushModule {}

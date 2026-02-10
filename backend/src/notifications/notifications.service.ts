@@ -12,6 +12,8 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UsersService } from "src/users/users.service";
 import { CreateNotificationDto } from "./dto/createNotification.dto";
+import { PushService } from "src/push/push.service";
+import { NotificationDto } from "./dto/notification.dto";
 
 @Injectable()
 export class NotificationsService {
@@ -19,16 +21,20 @@ export class NotificationsService {
     @InjectRepository(Notification)
     private readonly notifications: Repository<Notification>,
     private readonly usersService: UsersService,
+    private readonly pushService: PushService,
   ) {}
 
   public async createNotification<T extends NotificationType>(
     dto: CreateNotificationDto<T>,
   ): Promise<Notification> {
-    return this.notifications.save({
+    const notification = await this.notifications.save({
       userId: dto.userId,
       type: dto.type,
       data: dto.data,
     });
+
+    await this.pushService.sendNotification(new NotificationDto(notification));
+    return notification;
   }
 
   async getNotifications(userId: string): Promise<Notification[]> {
